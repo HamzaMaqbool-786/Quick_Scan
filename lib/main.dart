@@ -1,35 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'app/app.dart';
-import 'core/constants/app_constants.dart';
-import 'data/models/scan_result_model.dart';
+import 'package:provider/provider.dart';
+import 'package:voice_notes_app/screens/splash_screen.dart';
+import 'providers/notes_provider.dart';
+import 'providers/theme_provider.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-  // Transparent status bar
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0A0E1A),
-      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
 
-  // Initialize Hive
-  await Hive.initFlutter();
-  Hive.registerAdapter(ScanResultModelAdapter());
-  Hive.registerAdapter(ScanTypeAdapter());
-  await Hive.openBox<ScanResultModel>(AppConstants.scansBox);
+  runApp(const VoiceNotesApp());
+}
 
-  runApp(const QuickScanApp());
+class VoiceNotesApp extends StatelessWidget {
+  const VoiceNotesApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NotesProvider()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Voice Notes',
+            debugShowCheckedModeBanner: false,
+            theme: themeProvider.lightTheme,
+            darkTheme: themeProvider.darkTheme,
+            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const SplashScreen(),
+          );
+        },
+      ),
+    );
+  }
 }
